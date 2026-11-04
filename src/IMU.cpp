@@ -150,3 +150,56 @@ bool IMU_read(IMUData &data)
 
     return true;
 }
+
+// -------------------------------
+// Drehwinkel berechnen
+// -------------------------------
+
+static float g_winkel = 0.0f;
+static unsigned long g_letzteZeit = 0;
+static bool g_ersterAufruf = true;
+
+float IMU_g()
+{
+    IMUData daten;
+
+    unsigned long jetzt = micros();
+
+    // Neue Messwerte vom Sensor lesen
+    if (!IMU_read(daten))
+    {
+        g_letzteZeit = jetzt;
+        g_ersterAufruf = true;
+        return g_winkel;
+    }
+
+    // Beim ersten Aufruf nur die Zeit speichern
+    if (g_ersterAufruf)
+    {
+        g_letzteZeit = jetzt;
+        g_ersterAufruf = false;
+        return g_winkel;
+    }
+
+    // Zeit seit der letzten Messung in Sekunden
+    float dt = (jetzt - g_letzteZeit) / 1000000.0f;
+
+    g_letzteZeit = jetzt;
+
+    // Drehgeschwindigkeit integrieren
+    g_winkel += daten.gyroZ * dt;
+
+    return g_winkel;
+}
+
+
+// -------------------------------
+// Winkel auf null setzen
+// -------------------------------
+
+void IMU_gReset()
+{
+    g_winkel = 0.0f;
+    g_letzteZeit = 0;
+    g_ersterAufruf = true;
+}
