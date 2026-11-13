@@ -7,7 +7,9 @@
 static stmdev_ctx_t dev_ctx;
 
 
-//DATEN SCHREIBEN
+// -------------------------------
+// I2C: Daten schreiben
+// -------------------------------
 
 static int32_t platform_write(
     void *handle,
@@ -25,7 +27,9 @@ static int32_t platform_write(
 }
 
 
-//DATEN LESEN
+// -------------------------------
+// I2C: Daten lesen
+// -------------------------------
 
 static int32_t platform_read(
     void *handle,
@@ -51,7 +55,9 @@ static int32_t platform_read(
 }
 
 
-//SENSOR INITIALISIEREN
+// -------------------------------
+// Sensor initialisieren
+// -------------------------------
 
 bool IMU_begin(TwoWire &bus)
 {
@@ -93,7 +99,9 @@ bool IMU_begin(TwoWire &bus)
 }
 
 
-//MESSWERTE AUSLESEN
+// -------------------------------
+// Alle Messwerte auslesen
+// -------------------------------
 
 bool IMU_read(IMUData &data)
 {
@@ -114,6 +122,7 @@ bool IMU_read(IMUData &data)
         return false;
 
 
+    // Beschleunigung in m/s²
     data.accX =
         lsm6dsv_from_fs2_to_mg(acc[0]) * 0.00980665f;
 
@@ -123,7 +132,8 @@ bool IMU_read(IMUData &data)
     data.accZ =
         lsm6dsv_from_fs2_to_mg(acc[2]) * 0.00980665f;
 
-    
+
+    // Drehgeschwindigkeit in °/s
     data.gyroX =
         lsm6dsv_from_fs250_to_mdps(gyro[0]) / 1000.0f;
 
@@ -134,24 +144,28 @@ bool IMU_read(IMUData &data)
         lsm6dsv_from_fs250_to_mdps(gyro[2]) / 1000.0f;
 
 
+    // Temperatur in °C
     data.temperature =
         lsm6dsv_from_lsb_to_celsius(temp);
 
     return true;
 }
 
-//DREHWINKEL BERECHNEN
+// -------------------------------
+// Drehwinkel berechnen
+// -------------------------------
 
 static float g_winkel = 0.0f;
 static unsigned long g_letzteZeit = 0;
 static bool g_ersterAufruf = true;
 
-float IMU_g()
+float IMU_getPosition()
 {
     IMUData daten;
 
     unsigned long jetzt = micros();
 
+    // Neue Messwerte vom Sensor lesen
     if (!IMU_read(daten))
     {
         g_letzteZeit = jetzt;
@@ -159,6 +173,7 @@ float IMU_g()
         return g_winkel;
     }
 
+    // Beim ersten Aufruf nur die Zeit speichern
     if (g_ersterAufruf)
     {
         g_letzteZeit = jetzt;
@@ -166,19 +181,23 @@ float IMU_g()
         return g_winkel;
     }
 
+    // Zeit seit der letzten Messung in Sekunden
     float dt = (jetzt - g_letzteZeit) / 1000000.0f;
 
     g_letzteZeit = jetzt;
 
+    // Drehgeschwindigkeit integrieren
     g_winkel += daten.gyroZ * dt;
 
     return g_winkel;
 }
 
 
-//WINKEL AUF NULL SETZEN
+// -------------------------------
+// Winkel auf null setzen
+// -------------------------------
 
-void IMU_gReset()
+void IMU_getPositionReset()
 {
     g_winkel = 0.0f;
     g_letzteZeit = 0;
