@@ -24,8 +24,8 @@ bool IMU_begin(TwoWire &bus);
 
 bool IMU_read(IMUData &data);
 
-float IMU_g();
+float IMU_getPosition();
 
-void IMU_gReset();
+void IMU_getPositionReset();
 
 #endif
